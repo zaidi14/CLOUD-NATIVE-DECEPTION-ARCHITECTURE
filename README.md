@@ -313,10 +313,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👤 Author
 
-**Mojiz** — Cloud Security Engineer
-
-- Specialization: Identity-Based Active Defense
-- Focus: Deception Technology & Threat Intelligence
+**Mojiz** 
 
 ---
 
