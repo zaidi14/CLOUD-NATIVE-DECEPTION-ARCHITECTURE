@@ -1,0 +1,90 @@
+# =============================================================================
+# Filebeat Configuration for Financial Decoy
+# Cloud-Native Deception Architecture
+# =============================================================================
+#
+# This configuration ships logs from the Financial Decoy honeypot
+# to Elasticsearch for analysis in Kibana.
+#
+# Installation:
+#   1. Install Filebeat: sudo apt-get install filebeat
+#   2. Copy this file: sudo cp financial-decoy-filebeat.yml /etc/filebeat/filebeat.yml
+#   3. Start service: sudo systemctl enable --now filebeat
+#
+# =============================================================================
+
+# ========================== Input Configuration ==============================
+filebeat.inputs:
+
+  # Financial Decoy Application Logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/financial-decoy.log
+    
+    # Add metadata fields for filtering in Kibana
+    fields:
+      app: financial-decoy
+      log_type: financial-web-decoy
+      environment: production
+      honeypot_type: high-interaction
+    fields_under_root: true
+    
+    # Multiline handling for stack traces
+    multiline.pattern: '^\d{4}-\d{2}-\d{2}'
+    multiline.negate: true
+    multiline.match: after
+
+  # Optional: System auth logs for SSH attempts
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/auth.log
+    fields:
+      app: system-auth
+      log_type: ssh-attempts
+    fields_under_root: true
+
+# ========================== Output Configuration =============================
+
+# Send to local T-Pot Elasticsearch instance
+output.elasticsearch:
+  hosts: ["http://localhost:64298"]
+  
+  # Custom index pattern for easy identification
+  index: "financial-decoy-%{+yyyy.MM.dd}"
+  
+  # Bulk settings for performance
+  bulk_max_size: 50
+
+# ========================== Template Settings ================================
+
+# Disable automatic template management (T-Pot handles this)
+setup.template.enabled: false
+setup.ilm.enabled: false
+
+# ========================== Logging ==========================================
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+# ========================== Processors =======================================
+
+processors:
+  # Add host metadata
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  
+  # Add cloud metadata (Azure)
+  - add_cloud_metadata: ~
+  
+  # Drop debug messages to reduce noise
+  - drop_event:
+      when:
+        regexp:
+          message: "^DEBUG"

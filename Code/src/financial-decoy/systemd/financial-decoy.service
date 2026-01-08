@@ -1,0 +1,22 @@
+[Unit]
+Description=Financial Decoy Honeypot - Cloud-Native Deception Architecture
+Documentation=https://github.com/mojiz/cloud-honeypot
+After=network.target
+
+[Service]
+Type=simple
+User=hpmojiz
+Group=hpmojiz
+WorkingDirectory=/home/hpmojiz/financial-decoy/app
+Environment="PATH=/home/hpmojiz/financial-decoy/venv/bin"
+ExecStart=/home/hpmojiz/financial-decoy/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:8085 app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=10
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
