@@ -1,6 +1,6 @@
 # Cloud-Native Deception Architecture for Financial Systems
 
-> **"The Perimeter is Dead. Long live the Decoy."**
+> **"Stop playing the goalkeeper and start playing chess with attackers."**
 
 [![Azure](https://img.shields.io/badge/Cloud-Microsoft%20Azure-0089D6?logo=microsoft-azure)](https://azure.microsoft.com)
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://python.org)
