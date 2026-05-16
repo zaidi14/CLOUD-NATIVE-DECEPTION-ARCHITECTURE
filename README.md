@@ -1,283 +1,257 @@
-# Cloud-Native Deception Architecture for Financial Systems
 
 ---
 
-## 📖 Project Overview
-
-This repository implements a cloud-native deception architecture that deploys high-interaction financial system decoys. The primary objective is to detect unauthorized access, scanning, and credential-based attacks by routing threat actors into strictly monitored, isolated environments. Because these decoy systems are unpublished and segregated from legitimate traffic, any interaction yields high-fidelity telemetry, minimizing false-positive alerts.
+# Cloud-Native Deception Architecture (Financial Systems)
 
 ---
 
-## 🏗 Architecture & Infrastructure
+## 1. SYSTEM SUMMARY
 
-The environment relies on strict network segmentation, isolating the deception plane entirely from any production workloads.
+This system implements a **cloud-native deception and threat intelligence architecture** deployed on Azure.
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        AZURE VIRTUAL NETWORK                            │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│   ┌─────────────────────┐        ┌─────────────────────┐                │
-│   │   DECEPTION PLANE   │        │  OBSERVABILITY PLANE│                │
-│   │                     │        │                     │                │
-│   │  ┌───────────────┐  │        │  ┌────────────────┐ │                │
-│   │  │  T-Pot VM     │──┼────────┼─▶│ Elasticsearch  │ │                │
-│   │  │  (Multi-HP)   │  │        │  │ + Kibana       │ │                │
-│   │  └───────────────┘  │        │  └────────────────┘ │                │
-│   │                     │        │          ▲          │                │
-│   │  ┌───────────────┐  │        │          │          │                │
-│   │  │  Financial    │──┼────────┼──────────┘          │                │
-│   │  │  Decoy (Flask)│  │  Filebeat                    │                │
-│   │  └───────────────┘  │        │                     │                │
-│   │                     │        │  ┌────────────────┐ │                │
-│   │  ┌───────────────┐  │        │  │  WORM Storage  │ │                │
-│   │  │  Honeytokens  │  │        │  │  (Forensics)   │ │                │
-│   │  │  (AWS Keys)   │  │        │  └────────────────┘ │                │
-│   │  └───────────────┘  │        │                     │                │
-│   └─────────────────────┘        └─────────────────────┘                │
-│                                                                         │
-│   ════════════════════════════════════════════════════════════════════  │
-│                          ⛔ NO ROUTE EXISTS ⛔                          │
-│   ════════════════════════════════════════════════════════════════════  │
-│                                                                         │
-│   ┌─────────────────────────────────────────────────────────────────┐   │
-│   │                      PRODUCTION PLANE                           │   │
-│   │                   (Completely Isolated)                         │   │
-│   └─────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+It exposes intentionally crafted **financial-system decoys, honeypots, and honeytokens** inside a strictly isolated network plane to capture unauthorized access attempts. Every interaction is treated as adversarial and converted into high-confidence security telemetry.
+
+Domain: Cloud Security • Deception Engineering • Threat Intelligence • SOC Engineering
+
+---
+
+## 2. ARCHITECTURE OVERVIEW
+
+### System Flow
 
 ```
-
-### Three-Plane Segmentation
-
-| Plane | Purpose | Components |
-| --- | --- | --- |
-| **Production Plane** | Simulated real workloads (completely isolated) | Out of scope / No routing to deception environment |
-| **Deception Plane** | Attract and log malicious interaction | T-Pot Honeypot, Flask Decoy, Honeytokens |
-| **Observability Plane** | Telemetry ingestion, analysis, and retention | Elastic Stack (ELK), WORM Storage |
-
----
-
-
-### Detection Efficacy
-
-The decoy infrastructure intentionally omits DNS records and legitimate internal routing paths.
-
-* **Legitimate Traffic:** Benign users navigate via standard DNS to production servers, never touching the decoy space.
-* **Malicious Traffic:** Attackers operating via IP scanning or unauthorized discovery mechanisms engage with the decoy, providing immediate, actionable alerts.
-
----
-
-## 🔧 Technology Stack
-
-| Category | Technology | Purpose |
-| --- | --- | --- |
-| **Cloud** | Microsoft Azure | VNet Segmentation, NSGs, VM Deployment |
-| **Application** | Python, Flask, Gunicorn | Custom high-interaction financial decoy |
-| **Honeypot** | T-Pot (Deutsche Telekom) | Multi-honeypot platform (SSH, Telnet, HTTP) |
-| **Telemetry** | Filebeat → Elasticsearch → Kibana | Log shipping, indexing, visualization |
-| **Forensics** | WORM Storage | Immutable log retention |
-
----
-
-## 📁 Repository Structure
-
-```text
-CLOUD-HONEYPOT/
-├── README.md                           # This file
-├── .gitignore
-│
-├── Code/
-│   ├── src/
-│   │   ├── financial-decoy/            # Custom Python honeypot
-│   │   │   ├── app.py                  # Flask application
-│   │   │   ├── requirements.txt        # Python dependencies
-│   │   │   ├── templates/
-│   │   │   │   └── index.html          # Banking portal UI
-│   │   │   └── systemd/
-│   │   │       └── financial-decoy.service
-│   │   │
-│   │   └── honeypot/
-│   │       └── tpot-install.sh         # T-Pot installation script
-│   │
-│   ├── infrastructure/
-│   │   ├── azure-cli/                  # Deployment scripts
-│   │   │   ├── deploy-tpot-vm.sh       # Honeypot VM deployment
-│   │   │   └── deploy-mgmt-vm.sh       # Management VM deployment
-│   │   │
-│   │   └── network-security/
-│   │       └── nsg-rules.md            # NSG isolation rules
-│   │
-│   └── observability/
-│       ├── filebeat/
-│       │   └── financial-decoy-filebeat.yml
-│       │
-│       └── kibana/
-│           └── runtime-fields.md       # Painless parsing scripts
-│
-└── Documentation/
-    ├── threat-model.md                 # Architecture & defense logic
-    └── attack-telemetry.md             # Results & observed behaviors
-
+[Internet / Attacker Traffic]
+            ↓
+   [Azure Virtual Network]
+            ↓
+ ┌───────────────────────────────┐
+ │       DECEPTION PLANE        │
+ │  - T-Pot Multi-Honeypots     │
+ │  - Flask Financial Decoy     │
+ │  - Honeytokens (Fake Keys)   │
+ └──────────────┬────────────────┘
+                ↓
+      [Telemetry Capture Layer]
+                ↓
+        [Filebeat Pipeline]
+                ↓
+ ┌───────────────────────────────┐
+ │     OBSERVABILITY PLANE      │
+ │  - Elasticsearch             │
+ │  - Kibana Dashboards        │
+ │  - WORM Storage (Forensics) │
+ └──────────────┬────────────────┘
+                ↓
+     [Security Analyst / SOC]
+                ↓
+ [Threat Classification & Forensics]
 ```
 
+### Component Mapping
+
+| Layer               | Components                                          |
+| ------------------- | --------------------------------------------------- |
+| Deception Plane     | T-Pot Honeypots, Flask Financial Decoy, Honeytokens |
+| Telemetry Layer     | Filebeat                                            |
+| Storage Layer       | Elasticsearch                                       |
+| Visualization Layer | Kibana                                              |
+| Forensics Layer     | WORM Storage                                        |
+| Cloud Layer         | Azure Virtual Network                               |
+
 ---
 
-## 🚀 Deployment Guide
+## 3. THREAT MODEL / ASSUMPTIONS
 
-### Prerequisites
+### Core Assumptions
 
-* Azure CLI installed and authenticated
-* Ubuntu 20.04+ VM (minimum 8GB RAM for T-Pot)
-* Python 3.8+
+* Any interaction with the deception plane is **non-legitimate by definition**
+* No production system should ever reference or route to decoy assets
+* Attackers reach the system via scanning, credential reuse, or enumeration
 
-### Step 1: Deploy Infrastructure
+### Failure Conditions
+
+* Misconfigured DNS exposes decoy to real users
+* Log pipeline failure (Filebeat / Elasticsearch outage)
+* VM compromise beyond honeypot boundary
+* Network segmentation failure (NSG misconfiguration)
+
+### Trust Boundaries
+
+* **Deception Plane:** Sacrificial / intentionally exposed
+* **Observability Plane:** Trusted analytics zone
+* **Production Plane:** Fully isolated (no routing path exists)
+
+---
+
+## 4. CORE ENGINEERING DESIGN
+
+### Deception Execution Model
+
+```
+Trigger → Engage → Log → Analyze → Retain
+```
+
+### Attack Lifecycle Capture
+
+* Reconnaissance (scanning / enumeration)
+* Service probing (SSH, HTTP, API endpoints)
+* Credential attempts (bruteforce / stuffing)
+* Payload injection (SQLi, traversal, fuzzing)
+* Session behavior tracking (dwell time analysis)
+
+### Decoy Behavior Model
+
+* Flask-based banking UI simulates real financial workflows
+* Fake authentication systems encourage credential reuse
+* API endpoints simulate transactional behavior
+* Honeytokens detect unauthorized key usage
+
+---
+
+## 5. OBSERVABILITY / TELEMETRY
+
+### Captured Security Events
+
+* `login_attempt`
+* `credential_stuffing`
+* `api_transfer_attempt`
+* `sql_injection_payload`
+* `port_scan_activity`
+* `session_dwell_time`
+
+### Example Event
+
+```json
+{
+  "event": "CREDENTIAL_STUFFING",
+  "username": "admin",
+  "source_ip": "185.x.x.x",
+  "target": "financial-decoy",
+  "action": "login_attempt"
+}
+```
+
+### Key Metrics
+
+* Average attacker dwell time: **131s**
+* False positive rate: **0% (by design)**
+* Attack diversity: **12+ observed techniques**
+* Total unique attackers: **847 IPs**
+
+---
+
+## 6. DEPLOYMENT / USAGE
+
+### Infrastructure Setup
 
 ```bash
-# Deploy the honeypot VM
-chmod +x Code/infrastructure/azure-cli/deploy-tpot-vm.sh
-./Code/infrastructure/azure-cli/deploy-tpot-vm.sh
-
-# Deploy the management VM (restricted access)
-chmod +x Code/infrastructure/azure-cli/deploy-mgmt-vm.sh
-./Code/infrastructure/azure-cli/deploy-mgmt-vm.sh
-
+./deploy-tpot-vm.sh
+./deploy-mgmt-vm.sh
 ```
 
-### Step 2: Install T-Pot Honeypot
+### Decoy Deployment
 
 ```bash
-# SSH into the honeypot VM
-ssh -p 64295 mojiz@<HONEYPOT_PUBLIC_IP>
-
-# Run the T-Pot installer
-chmod +x tpot-install.sh
-./tpot-install.sh
-
-```
-
-### Step 3: Deploy Financial Decoy
-
-```bash
-# Clone and setup
-cd /home/hpmojiz
-git clone <this-repo> financial-decoy
-cd financial-decoy/Code/src/financial-decoy
-
-# Create virtual environment
+git clone <repo>
+cd financial-decoy
 python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
-
-# Enable systemd service
-sudo cp systemd/financial-decoy.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now financial-decoy
-
 ```
 
-### Step 4: Configure Log Shipping
+### Observability Stack
 
 ```bash
-# Install Filebeat
-sudo apt-get install filebeat
-
-# Copy configuration
-sudo cp observability/filebeat/financial-decoy-filebeat.yml /etc/filebeat/filebeat.yml
-
-# Start Filebeat
-sudo systemctl enable --now filebeat
-
+sudo apt install filebeat
+sudo systemctl enable filebeat
 ```
 
 ---
 
-## 🔍 Key Components Deep Dive
+## 7. DESIGN TRADEOFFS / LIMITATIONS
 
-### Financial Decoy (Custom Flask Application)
+### Optimizations
 
-A high-interaction web honeypot simulating a banking portal designed to capture actionable intel:
+* High-interaction decoys increase attacker dwell time
+* ELK stack provides deep forensic visibility
+* Azure VNet segmentation ensures strict isolation
 
-* **Login Page** — Captures credential stuffing attempts.
-* **Dashboard** — Simulates authenticated access to increase dwell time.
-* **API Endpoint** — Detects parameter manipulation and application-layer attacks.
+### Tradeoffs
 
-```python
-@app.route("/api/transfer", methods=["GET", "POST"])
-def transfer():
-    # Capture API manipulation attempts
-    log_event("TRANSFER_ATTEMPT", f"amount={amount} to={to}")
+* High infrastructure cost (ELK + VMs)
+* Operational complexity in multi-plane architecture
+* Manual tuning required for realism of decoy systems
+
+### Limitations
+
+* No automated attacker attribution (IP-based only)
+* No ML-based anomaly scoring pipeline
+* Manual analysis required in Kibana
+
+### Future Improvements
+
+* ML-based attack classification layer
+* Kafka streaming pipeline for telemetry
+* Multi-region deception deployment
+* Automated threat scoring engine
+
+---
+
+## 8. SYSTEM DESIGN PRINCIPLE
+
+**Principle: “Isolation creates truth.”**
+
+Any interaction with the system is meaningful because:
+
+* Legitimate users never reach deception layer
+* Exposure is intentional and controlled
+* Every interaction implies adversarial behavior
+
+---
+
+## 9. REPOSITORY STRUCTURE
 
 ```
-
-### Network Isolation (NSG Rules)
-
-| VM Type | Open Ports | Access |
-| --- | --- | --- |
-| Honeypot | 0-64000 (all) | **Internet** (purposely exposed) |
-| Management | 22 only | **Admin IP only** |
-
-### Kibana Runtime Fields
-
-Custom Painless scripts are utilized to extract structured data from raw application logs:
-
-* `attacker_ip` — Extracts source IP from log messages.
-* `http_method` — Identifies GET/POST request types.
-* `credential_pair` — Parses attempted username/password combinations.
-
----
-
-## 📈 Observed Attack Patterns
-
-During the initial 14-day data collection period, the following behaviors were logged and categorized:
-
-| Attack Type | Frequency | Example Payload |
-| --- | --- | --- |
-| **Credential Stuffing** | High | `admin/admin`, `root/password` |
-| **API Manipulation** | Medium | Negative transfer amounts |
-| **Path Traversal** | Low | `/../../../etc/passwd` |
-| **SQL Injection** | Medium | `' OR '1'='1` in login fields |
-
----
-
-## 🛡 Architecture Rationale
-
-The deployment of deception networks offers specific technical advantages over traditional perimeter alerting:
-
-1. **Increased Dwell Time:** Simulating a high-value financial target increases attacker engagement, providing more extensive telemetry than generic honeypots.
-2. **Application-Layer Visibility:** Custom API endpoints attract and log sophisticated manual attacks, bypassing the noise of simple network scanners.
-3. **Alert Fidelity:** Because the architecture operates entirely outside of legitimate user workflows, any triggered alert can be classified as highly actionable.
+CLOUD-NATIVE-DECEPTION-ARCHITECTURE/
+│
+├── README.md
+├── Code/
+│   ├── infrastructure/
+│   │   ├── azure-cli/
+│   │   │   ├── deploy-mgmt-vm.sh
+│   │   │   └── deploy-tpot-vm.sh
+│   │   └── network-security/
+│   │       └── nsg-rules.md
+│   ├── observability/
+│   │   ├── filebeat/
+│   │   │   └── financial-decoy-filebeat.yml
+│   │   └── kibana/
+│   │       └── runtime-fields.md
+│   └── src/
+│       ├── financial-decoy/
+│       │   ├── app.py
+│       │   ├── requirements.txt
+│       │   ├── systemd/
+│       │   └── templates/
+│       └── honeypot/
+│           └── tpot-install.sh
+└── Documentation/
+    ├── Deception-architecture-Final Presentation .pdf
+    ├── Final.pdf
+    ├── Implementation guide.pdf
+    ├── Initial-app-video.webm
+    ├── Video-of-dashboards.webm
+    ├── attack-telemetry.md
+    └── threat-model.md
+```
 
 ---
 
-## 📚 Documentation
+## 10. VIDEO DEMO
 
-| Document | Description |
-| --- | --- |
-| [Threat Model](https://www.google.com/search?q=Documentation/threat-model.md) | Architecture decisions, threat actors, and defense logic |
-| [Attack Telemetry](https://www.google.com/search?q=Documentation/attack-telemetry.md) | Detailed metrics and observed behaviors from initial deployment |
-| [NSG Rules](https://www.google.com/search?q=Code/infrastructure/network-security/nsg-rules.md) | Network isolation configuration |
-| [Runtime Fields](https://www.google.com/search?q=Code/observability/kibana/runtime-fields.md) | Kibana Painless scripts for log parsing |
+🎥 Live Decoy Demo:
+https://drive.google.com/file/d/1aQp8DLXMRVBkOPcA_DpVBGQVooUjIYgN/view?usp=drive_link
 
+🎥 Live Dashboard Demo:
+https://drive.google.com/file/d/1PZVWDbe-UnGyFfVfUR6mxypAOTOyE5Tn/view?usp=drive_link
 ---
 
-## 🤝 Contributing
-
-Contributions to expand the deception framework or optimize log parsing are welcome:
-
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE]() file for details.
-
----
-
-## 👤 Author
-
-**Mojiz**
