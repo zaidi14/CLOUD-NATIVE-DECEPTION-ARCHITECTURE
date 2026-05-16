@@ -1,6 +1,4 @@
 
-
-```markdown
 # 🛡️ Cloud-Native Deception Architecture (Financial Systems)
 
 [![Azure](https://img.shields.io/badge/Azure-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white)](https://azure.microsoft.com)
