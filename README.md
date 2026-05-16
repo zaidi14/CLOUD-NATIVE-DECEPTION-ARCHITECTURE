@@ -14,6 +14,30 @@ It exposes intentionally crafted **financial-system decoys, honeypots, and honey
 Domain: Cloud Security • Deception Engineering • Threat Intelligence • SOC Engineering
 
 ---
+## SKILL MAPPING (Recruiter View)
+
+### Cloud Security Engineering
+* Azure Virtual Network isolation design
+* Multi-plane architecture (deception / observability separation)
+* Secure network segmentation using NSGs
+
+### Detection Engineering
+* Event-driven attack detection pipelines
+* Log correlation across ELK stack
+* High-interaction honeypot telemetry design
+
+### Security Architecture
+* Threat modeling of adversary behavior flows
+* Zero-trust segmentation design
+* Attack surface minimization strategies
+
+### Systems Design
+* Multi-layer distributed architecture design
+* Event ingestion → processing → analysis pipelines
+* State-based detection logic systems
+
+
+---
 
 ## 2. ARCHITECTURE OVERVIEW
 
