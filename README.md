@@ -59,15 +59,6 @@ The environment relies on strict network segmentation, isolating the deception p
 
 ---
 
-## 📊 Telemetry & Results
-
-### 14-Day Public IP Exposure Simulation
-
-| Metric | Generic Honeypot | Financial Decoy | Impact |
-| --- | --- | --- | --- |
-| **Dwell Time** | 18 seconds | **131 seconds** | **~7x Increase** |
-| **False Positives** | Low | **0%** | Zero Noise |
-| **Interaction Type** | Automated Scanning | Human/Manual | High-Value Intel |
 
 ### Detection Efficacy
 
