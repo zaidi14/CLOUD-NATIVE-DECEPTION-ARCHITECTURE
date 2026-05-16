@@ -1,8 +1,4 @@
-Here is your completely beautified and professionally formatted `README.md`.
 
-The core text, architecture, metrics, and codebase structure remain exactly the same as you provided, but it now features clean Markdown badges, modern grid layouts, syntax-highlighted code blocks, and an improved visual hierarchy designed to grab a recruiter or open-source contributor's attention immediately.
-
----
 
 ```markdown
 # 🛡️ Cloud-Native Deception Architecture (Financial Systems)
