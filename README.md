@@ -1,108 +1,89 @@
 # Cloud-Native Deception Architecture for Financial Systems
 
-> **"Stop playing the goalkeeper and start playing chess with attackers."**
-
-[![Azure](https://img.shields.io/badge/Cloud-Microsoft%20Azure-0089D6?logo=microsoft-azure)](https://azure.microsoft.com)
-[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://python.org)
-[![T-Pot](https://img.shields.io/badge/Honeypot-T--Pot-red)](https://github.com/telekom-security/tpotce)
-[![ELK](https://img.shields.io/badge/Observability-Elastic%20Stack-005571?logo=elastic)](https://elastic.co)
-
 ---
 
 ## 📖 Project Overview
 
-Most cloud security failures today don't start with malware—they start with **valid credentials**. Traditional perimeter defenses are designed to block; this project is designed to **attract, engage, and expose**.
-
-This project implements a **Cloud-Native Deception Architecture** that deploys realistic financial system decoys to detect unauthorized access with **zero false positives**. Unlike signature-based detection, any interaction with these hidden systems is **proof of malicious intent**.
-
-### Key Innovation
-```
-Traditional Security: "Block everything suspicious"  →  High false positives
-Deception Security:   "Attract and analyze intent"  →  Zero false positives
-```
+This repository implements a cloud-native deception architecture that deploys high-interaction financial system decoys. The primary objective is to detect unauthorized access, scanning, and credential-based attacks by routing threat actors into strictly monitored, isolated environments. Because these decoy systems are unpublished and segregated from legitimate traffic, any interaction yields high-fidelity telemetry, minimizing false-positive alerts.
 
 ---
 
-## 🏗 Architecture & Strategy
+## 🏗 Architecture & Infrastructure
 
-This system operates on the **"Legitimacy is Knowledge"** principle to eliminate false positives:
+The environment relies on strict network segmentation, isolating the deception plane entirely from any production workloads.
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        AZURE VIRTUAL NETWORK                            │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│   ┌─────────────────────┐        ┌─────────────────────┐               │
-│   │   DECEPTION PLANE   │        │  OBSERVABILITY PLANE │              │
-│   │   (The Trap)        │        │  (The Eyes)          │              │
-│   │                     │        │                      │              │
-│   │  ┌───────────────┐  │        │  ┌────────────────┐  │              │
-│   │  │  T-Pot VM     │──┼────────┼─▶│ Elasticsearch  │  │              │
-│   │  │  (Multi-HP)   │  │        │  │ + Kibana       │  │              │
-│   │  └───────────────┘  │        │  └────────────────┘  │              │
-│   │                     │        │          ▲           │              │
-│   │  ┌───────────────┐  │        │          │           │              │
-│   │  │  Financial    │──┼────────┼──────────┘           │              │
-│   │  │  Decoy (Flask)│  │   Filebeat                    │              │
-│   │  └───────────────┘  │        │                      │              │
-│   │                     │        │  ┌────────────────┐  │              │
-│   │  ┌───────────────┐  │        │  │  WORM Storage  │  │              │
-│   │  │  Honeytokens  │  │        │  │  (Forensics)   │  │              │
-│   │  │  (AWS Keys)   │  │        │  └────────────────┘  │              │
-│   │  └───────────────┘  │        │                      │              │
-│   └─────────────────────┘        └──────────────────────┘              │
+│   ┌─────────────────────┐        ┌─────────────────────┐                │
+│   │   DECEPTION PLANE   │        │  OBSERVABILITY PLANE│                │
+│   │                     │        │                     │                │
+│   │  ┌───────────────┐  │        │  ┌────────────────┐ │                │
+│   │  │  T-Pot VM     │──┼────────┼─▶│ Elasticsearch  │ │                │
+│   │  │  (Multi-HP)   │  │        │  │ + Kibana       │ │                │
+│   │  └───────────────┘  │        │  └────────────────┘ │                │
+│   │                     │        │          ▲          │                │
+│   │  ┌───────────────┐  │        │          │          │                │
+│   │  │  Financial    │──┼────────┼──────────┘          │                │
+│   │  │  Decoy (Flask)│  │  Filebeat                    │                │
+│   │  └───────────────┘  │        │                     │                │
+│   │                     │        │  ┌────────────────┐ │                │
+│   │  ┌───────────────┐  │        │  │  WORM Storage  │ │                │
+│   │  │  Honeytokens  │  │        │  │  (Forensics)   │ │                │
+│   │  │  (AWS Keys)   │  │        │  └────────────────┘ │                │
+│   │  └───────────────┘  │        │                     │                │
+│   └─────────────────────┘        └─────────────────────┘                │
 │                                                                         │
-│   ════════════════════════════════════════════════════════════════════ │
+│   ════════════════════════════════════════════════════════════════════  │
 │                          ⛔ NO ROUTE EXISTS ⛔                          │
-│   ════════════════════════════════════════════════════════════════════ │
+│   ════════════════════════════════════════════════════════════════════  │
 │                                                                         │
-│   ┌─────────────────────────────────────────────────────────────────┐  │
-│   │                      PRODUCTION PLANE                            │  │
-│   │                   (Completely Isolated)                          │  │
-│   └─────────────────────────────────────────────────────────────────┘  │
+│   ┌─────────────────────────────────────────────────────────────────┐   │
+│   │                      PRODUCTION PLANE                           │   │
+│   │                   (Completely Isolated)                         │   │
+│   └─────────────────────────────────────────────────────────────────┘   │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
+
 ```
 
-### Three-Plane Design
+### Three-Plane Segmentation
 
 | Plane | Purpose | Components |
-|-------|---------|------------|
-| **Production Plane** | Completely isolated; no route exists from decoys | Real systems (out of scope) |
-| **Deception Plane** | Attract and engage attackers | T-Pot Honeypot, Financial Decoy, Honeytokens |
-| **Observability Plane** | Collect and analyze telemetry | Elastic Stack (ELK), WORM Storage |
+| --- | --- | --- |
+| **Production Plane** | Simulated real workloads (completely isolated) | Out of scope / No routing to deception environment |
+| **Deception Plane** | Attract and log malicious interaction | T-Pot Honeypot, Flask Decoy, Honeytokens |
+| **Observability Plane** | Telemetry ingestion, analysis, and retention | Elastic Stack (ELK), WORM Storage |
 
 ---
 
-## 📊 Impact & Results
+## 📊 Telemetry & Results
 
-### 14-Day Live Fire Simulation on Azure Public IP Space
+### 14-Day Public IP Exposure Simulation
 
 | Metric | Generic Honeypot | Financial Decoy | Impact |
-|--------|------------------|-----------------|--------|
+| --- | --- | --- | --- |
 | **Dwell Time** | 18 seconds | **131 seconds** | **~7x Increase** |
 | **False Positives** | Low | **0%** | Zero Noise |
 | **Interaction Type** | Automated Scanning | Human/Manual | High-Value Intel |
 
-### Why Zero False Positives?
+### Detection Efficacy
 
-The decoy IPs were **never published in DNS**. Therefore:
+The decoy infrastructure intentionally omits DNS records and legitimate internal routing paths.
 
-```
-Employee Path:  Bookmark → DNS → Production Server  ✅ Never touches decoy
-Attacker Path:  IP Scan → Random Discovery → Decoy  🚨 ALERT: Proof of Malice
-```
-
-**"Legitimacy is Knowledge"** — Anyone who finds the decoy was actively searching for vulnerabilities.
+* **Legitimate Traffic:** Benign users navigate via standard DNS to production servers, never touching the decoy space.
+* **Malicious Traffic:** Attackers operating via IP scanning or unauthorized discovery mechanisms engage with the decoy, providing immediate, actionable alerts.
 
 ---
 
 ## 🔧 Technology Stack
 
 | Category | Technology | Purpose |
-|----------|------------|---------|
+| --- | --- | --- |
 | **Cloud** | Microsoft Azure | VNet Segmentation, NSGs, VM Deployment |
-| **Application** | Python, Flask, Gunicorn | Custom Financial Decoy |
+| **Application** | Python, Flask, Gunicorn | Custom high-interaction financial decoy |
 | **Honeypot** | T-Pot (Deutsche Telekom) | Multi-honeypot platform (SSH, Telnet, HTTP) |
 | **Telemetry** | Filebeat → Elasticsearch → Kibana | Log shipping, indexing, visualization |
 | **Forensics** | WORM Storage | Immutable log retention |
@@ -111,7 +92,7 @@ Attacker Path:  IP Scan → Random Discovery → Decoy  🚨 ALERT: Proof of Mal
 
 ## 📁 Repository Structure
 
-```
+```text
 CLOUD-HONEYPOT/
 ├── README.md                           # This file
 ├── .gitignore
@@ -130,7 +111,7 @@ CLOUD-HONEYPOT/
 │   │       └── tpot-install.sh         # T-Pot installation script
 │   │
 │   ├── infrastructure/
-│   │   ├── azure-cli/                  # Infrastructure as Code
+│   │   ├── azure-cli/                  # Deployment scripts
 │   │   │   ├── deploy-tpot-vm.sh       # Honeypot VM deployment
 │   │   │   └── deploy-mgmt-vm.sh       # Management VM deployment
 │   │   │
@@ -147,6 +128,7 @@ CLOUD-HONEYPOT/
 └── Documentation/
     ├── threat-model.md                 # Architecture & defense logic
     └── attack-telemetry.md             # Results & observed behaviors
+
 ```
 
 ---
@@ -155,9 +137,9 @@ CLOUD-HONEYPOT/
 
 ### Prerequisites
 
-- Azure CLI installed and authenticated
-- Ubuntu 20.04+ VM (minimum 8GB RAM for T-Pot)
-- Python 3.8+
+* Azure CLI installed and authenticated
+* Ubuntu 20.04+ VM (minimum 8GB RAM for T-Pot)
+* Python 3.8+
 
 ### Step 1: Deploy Infrastructure
 
@@ -169,6 +151,7 @@ chmod +x Code/infrastructure/azure-cli/deploy-tpot-vm.sh
 # Deploy the management VM (restricted access)
 chmod +x Code/infrastructure/azure-cli/deploy-mgmt-vm.sh
 ./Code/infrastructure/azure-cli/deploy-mgmt-vm.sh
+
 ```
 
 ### Step 2: Install T-Pot Honeypot
@@ -180,6 +163,7 @@ ssh -p 64295 mojiz@<HONEYPOT_PUBLIC_IP>
 # Run the T-Pot installer
 chmod +x tpot-install.sh
 ./tpot-install.sh
+
 ```
 
 ### Step 3: Deploy Financial Decoy
@@ -199,6 +183,7 @@ pip install -r requirements.txt
 sudo cp systemd/financial-decoy.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now financial-decoy
+
 ```
 
 ### Step 4: Configure Log Shipping
@@ -212,6 +197,7 @@ sudo cp observability/filebeat/financial-decoy-filebeat.yml /etc/filebeat/filebe
 
 # Start Filebeat
 sudo systemctl enable --now filebeat
+
 ```
 
 ---
@@ -220,42 +206,43 @@ sudo systemctl enable --now filebeat
 
 ### Financial Decoy (Custom Flask Application)
 
-A high-interaction web honeypot simulating a banking portal:
+A high-interaction web honeypot simulating a banking portal designed to capture actionable intel:
 
-- **Login Page** — Captures credential stuffing attempts
-- **Dashboard** — Simulates authenticated access
-- **API Endpoint** — Detects parameter manipulation attacks
+* **Login Page** — Captures credential stuffing attempts.
+* **Dashboard** — Simulates authenticated access to increase dwell time.
+* **API Endpoint** — Detects parameter manipulation and application-layer attacks.
 
 ```python
 @app.route("/api/transfer", methods=["GET", "POST"])
 def transfer():
     # Capture API manipulation attempts
     log_event("TRANSFER_ATTEMPT", f"amount={amount} to={to}")
+
 ```
 
 ### Network Isolation (NSG Rules)
 
 | VM Type | Open Ports | Access |
-|---------|------------|--------|
-| Honeypot | 0-64000 (all) | **Internet** (intentional) |
+| --- | --- | --- |
+| Honeypot | 0-64000 (all) | **Internet** (purposely exposed) |
 | Management | 22 only | **Admin IP only** |
 
 ### Kibana Runtime Fields
 
-Custom Painless scripts extract structured data from raw logs:
+Custom Painless scripts are utilized to extract structured data from raw application logs:
 
-- `attacker_ip` — Extracts source IP from log messages
-- `http_method` — Identifies GET/POST request types
-- `credential_pair` — Parses attempted username/password combinations
+* `attacker_ip` — Extracts source IP from log messages.
+* `http_method` — Identifies GET/POST request types.
+* `credential_pair` — Parses attempted username/password combinations.
 
 ---
 
 ## 📈 Observed Attack Patterns
 
-During the 14-day simulation, the following behaviors were captured:
+During the initial 14-day data collection period, the following behaviors were logged and categorized:
 
-| Attack Type | Frequency | Example |
-|-------------|-----------|---------|
+| Attack Type | Frequency | Example Payload |
+| --- | --- | --- |
 | **Credential Stuffing** | High | `admin/admin`, `root/password` |
 | **API Manipulation** | Medium | Negative transfer amounts |
 | **Path Traversal** | Low | `/../../../etc/passwd` |
@@ -263,41 +250,30 @@ During the 14-day simulation, the following behaviors were captured:
 
 ---
 
-## 🛡 Defense Philosophy
+## 🛡 Architecture Rationale
 
-### The "Perimeter Paradox"
+The deployment of deception networks offers specific technical advantages over traditional perimeter alerting:
 
-Traditional security requires **100% success** from defenders (one miss = breach).
-
-Deception security **flips the asymmetry**:
-
-```
-Attacker must be 100% correct  →  One interaction with decoy = Exposed
-Defender needs ONE detection   →  Game over for attacker
-```
-
-### Why This Works for Financial Systems
-
-1. **High-value target simulation** increases attacker engagement
-2. **API endpoints** attract sophisticated manual attacks (not just bots)
-3. **Zero legitimate traffic** means every alert is actionable
+1. **Increased Dwell Time:** Simulating a high-value financial target increases attacker engagement, providing more extensive telemetry than generic honeypots.
+2. **Application-Layer Visibility:** Custom API endpoints attract and log sophisticated manual attacks, bypassing the noise of simple network scanners.
+3. **Alert Fidelity:** Because the architecture operates entirely outside of legitimate user workflows, any triggered alert can be classified as highly actionable.
 
 ---
 
 ## 📚 Documentation
 
 | Document | Description |
-|----------|-------------|
-| [Threat Model](Documentation/threat-model.md) | Architecture decisions and defense logic |
-| [Attack Telemetry](Documentation/attack-telemetry.md) | Detailed metrics and observed behaviors |
-| [NSG Rules](Code/infrastructure/network-security/nsg-rules.md) | Network isolation configuration |
-| [Runtime Fields](Code/observability/kibana/runtime-fields.md) | Kibana Painless scripts |
+| --- | --- |
+| [Threat Model](https://www.google.com/search?q=Documentation/threat-model.md) | Architecture decisions, threat actors, and defense logic |
+| [Attack Telemetry](https://www.google.com/search?q=Documentation/attack-telemetry.md) | Detailed metrics and observed behaviors from initial deployment |
+| [NSG Rules](https://www.google.com/search?q=Code/infrastructure/network-security/nsg-rules.md) | Network isolation configuration |
+| [Runtime Fields](https://www.google.com/search?q=Code/observability/kibana/runtime-fields.md) | Kibana Painless scripts for log parsing |
 
 ---
 
 ## 🤝 Contributing
 
-This project was developed as a capstone demonstration of cloud-native deception techniques. Contributions welcome:
+Contributions to expand the deception framework or optimize log parsing are welcome:
 
 1. Fork the repository
 2. Create a feature branch
@@ -307,14 +283,10 @@ This project was developed as a capstone demonstration of cloud-native deception
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE]() file for details.
 
 ---
 
 ## 👤 Author
 
-**Mojiz** 
-
----
-
-> *"The best trap is one that looks too valuable to ignore."*
+**Mojiz**
