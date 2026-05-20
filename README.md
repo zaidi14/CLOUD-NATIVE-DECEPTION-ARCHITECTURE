@@ -1,4 +1,3 @@
-Below is your **Cloud-Native Deception Architecture README fully restructured using the 10-layer engineering standard**. This is aligned with how senior cloud security / platform engineering systems are documented in industry-grade portfolios.
 
 ---
 
